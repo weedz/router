@@ -172,7 +172,7 @@ export default class Router {
             const paramLength = routeTree[":"][method].params.length;
 
             if (paramLength) {
-                params.push(routeTree.params.slice(routeTree.params.length - paramLength));
+                params.push(...routeTree.params.slice(routeTree.params.length - paramLength));
                 routeTree = routeTree[":"];
             }
         }
@@ -196,7 +196,7 @@ export function segmentize_uri(uri: PathLike): string[] {
     const startQuery = uri.indexOf("?");
 
     if (startQuery > -1) {
-        uri = uri.substring(startQuery);
+        uri = uri.substring(0, startQuery);
     }
 
     return uri.replace(/^\/+|\/+$/g, "").split("/");
