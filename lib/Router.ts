@@ -61,6 +61,8 @@ export default class Router {
             if (path[0] === ":") {
                 params.push(path.substring(1));
                 if (is_splat) {
+                    // if we encountered a splat segment followed by params we need to handle all the
+                    // params until the next "exact" segment, therefore we continue to the next segment
                     if (is_splat > 1) {
                         continue;
                     }
@@ -79,6 +81,7 @@ export default class Router {
             }
 
             let newRoute = routeTree[path];
+            // setup alternating paths. (eg. "/test1|test2" matches the same route)
             for (const orPath of path.split("|")) {
                 if (!routeTree[orPath]) {
                     if (!newRoute) {
@@ -99,6 +102,7 @@ export default class Router {
         };
 
         if (method === "middleware") {
+            // We can have multiple middewares for the same route
             routeTree[method].push(route);
         } else {
             if (routeTree[method]) {
@@ -139,6 +143,8 @@ export default class Router {
                         splat_route = routeTree["*"];
                         splat_route.params = [];
                     }
+                    // We save all segments after a "splat" segment in the possibility there
+                    // is one or more param segments matching our path further down the tree.
                     splat_route.params.push(path);
                 }
             } else {
@@ -147,7 +153,11 @@ export default class Router {
             if (routeTree["middleware"]) {
                 let result = null;
                 for (const middleware of routeTree["middleware"]) {
+                    // TODO: improve middleware support and handling...
                     result = middleware.callback(mapParams(middleware.params, params), result);
+                    if (!result) {
+                        return false;
+                    }
                 }
             }
         }
@@ -156,9 +166,9 @@ export default class Router {
             routeTree = splat_route;
         }
         
+        // This might handle splat segments followed by :param,
+        // this is undefined and undocumented, might be dragons...
         if (routeTree[":"] && routeTree.params) {
-            // This might handle splat segments followed by :param,
-            // this is undefined and undocumented, might be dragons...
             const paramLength = routeTree[":"][method].params.length;
 
             if (paramLength) {
@@ -178,6 +188,10 @@ export default class Router {
     }
 }
 
+/**
+ * Removes the query string portion and splits the given uri into segments,
+ * removing "/" from the beginning and end.
+ */
 export function segmentize_uri(uri: PathLike): string[] {
     const startQuery = uri.indexOf("?");
 
@@ -188,9 +202,12 @@ export function segmentize_uri(uri: PathLike): string[] {
     return uri.replace(/^\/+|\/+$/g, "").split("/");
 }
 
-function mapParams(paramNames: any[], paramValues: any[]) {
-    return paramNames.reduce( (accumulator, name, index) => {
-        accumulator[name] = paramValues[index];
+/**
+ * Maps the given array of keys to the array of values
+ */
+function mapParams(keys: any[], values: any[]) {
+    return keys.reduce( (accumulator, name, index) => {
+        accumulator[name] = values[index];
         return accumulator;
     }, {});
 }
