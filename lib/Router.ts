@@ -27,27 +27,15 @@ export default class Router {
         this.routes = {};
     }
 
-    get(uri: PathLike, callback: Function, options?: any) {
-        return this.setRoute("GET", uri, callback, options);
-    }
-
-    post(uri: PathLike, callback: Function, options?: any) {
-        return this.setRoute("POST", uri, callback, options);
-    }
-
-    put(uri: PathLike, callback: Function, options?: any) {
-        return this.setRoute("PUT", uri, callback, options);
-    }
-
-    any_of(uri: PathLike, methods: HTTPMethod[], callback: Function, options?: any) {
-        return methods.map(method => this.setRoute(method, uri, callback, options));
+    any_of(methods: HTTPMethod[], uri: PathLike, callback: Function, options?: any) {
+        return methods.map(method => this.addRoute(method, uri, callback, options));
     }
 
     use(uri: PathLike, callback: Function, options?: any) {
         const route = this.createRoute(uri, "middleware", callback)
     }
 
-    setRoute(method: HTTPMethod, uri: PathLike, callback: Function, options?: any) {
+    addRoute(method: HTTPMethod, uri: PathLike, callback: Function, options?: any) {
         return this.createRoute(uri, method, callback);
     }
 
@@ -103,6 +91,9 @@ export default class Router {
 
         if (method === "middleware") {
             // We can have multiple middewares for the same route
+            if (!routeTree[method]) {
+                routeTree[method] = [];
+            }
             routeTree[method].push(route);
         } else {
             if (routeTree[method]) {

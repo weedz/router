@@ -2,25 +2,25 @@ import Router, { segmentize_uri } from "./lib/Router";
 
 const router = new Router();
 
-router.get("/test", function(params) {
+router.addRoute("GET", "/test", function(params) {
     console.log("Test?");
 });
-router.get("/test/:msg", function(params) {
+router.addRoute("GET", "/test/:msg", function(params) {
     console.log("Test?", params);
 });
-router.get("/splat/*/test", function() {
+router.addRoute("GET", "/splat/*/test", function() {
     console.log("Wildcards?");
 });
-router.get("/wildcardparam/*/:param", function(params) {
+router.addRoute("GET", "/wildcardparam/*/:param", function(params) {
     console.log("Wildcards and params?", params);
 });
-router.get("/wildcardparam/*/test/:param", function(params) {
+router.addRoute("GET", "/wildcardparam/*/test/:param", function(params) {
     console.log("Wildcards and params2?", params);
 });
-router.get("/or/ping|pong", function() {
+router.addRoute("GET", "/or/ping|pong", function() {
     console.log("Which is it?");
 });
-router.get("/or/ping|pong/:param", function(params) {
+router.addRoute("GET", "/or/ping|pong/:param", function(params) {
     console.log("Which is it?", params);
 });
 
