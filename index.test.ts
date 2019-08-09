@@ -110,3 +110,15 @@ test("middleware", () => {
     expect(router.find("/middleware/test", "GET")).toBeTruthy();
     expect(router.find("/middleware/false/1", "GET")).toBeFalsy();
 });
+
+test("duplicate route", () => {
+    expect(() => {
+        router.addRoute("GET", "/test/duplicate", () => {});
+        router.addRoute("GET", "/test/duplicate", () => {});
+    }).toThrowError("Duplicate route");
+
+    expect(() => {
+        router.addRoute("GET", "/test/dup2/:param1", () => {});
+        router.addRoute("GET", "/test/dup2/:param2", () => {});
+    }).toThrowError("Duplicate route");
+})
