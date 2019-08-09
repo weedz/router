@@ -19,7 +19,7 @@ type SplatRouteTree = RouteTree & { params?: string[]};
 
 type PathLike = string;
 
-type HTTPMethod = "GET" | "POST" | "PUT" | "DELETE" | "UPDATE";
+type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH";
 
 export default class Router {
     routes: RouteTree;
@@ -47,7 +47,7 @@ export default class Router {
         const route = this.createRoute(uri, "middleware", callback)
     }
 
-    private setRoute(method: HTTPMethod, uri: PathLike, callback: Function, options?: any) {
+    setRoute(method: HTTPMethod, uri: PathLike, callback: Function, options?: any) {
         return this.createRoute(uri, method, callback);
     }
 
