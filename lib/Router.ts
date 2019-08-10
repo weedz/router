@@ -23,8 +23,8 @@ type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTI
 
 export default class Router {
     routes: RouteTree;
-    constructor() {
-        this.routes = {};
+    constructor(routes?: RouteTree) {
+        this.routes = routes || {};
     }
 
     any_of(methods: HTTPMethod[], uri: PathLike, callback: Function, options?: any) {
