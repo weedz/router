@@ -68,8 +68,8 @@ router.addRoute("GET", "/middleware/false/test", function() {
 
 
 test("exact route", () => {
-    expect(router.find("/test", "GET")).toBeTruthy();
-    expect(router.find("/test/1/2/3", "GET")).toBeTruthy();
+    expect(router.find("/test", "GET")).toHaveProperty("path", "/test");
+    expect(router.find("/test/1/2/3", "GET")).toHaveProperty("path", "/test/1/2/3");
     expect(router.find("/test/1/2", "GET")).toBeFalsy();
 });
 
@@ -80,8 +80,8 @@ test("params", () => {
 });
 
 test("alternation", () => {
-    expect(router.find("/or/ping", "GET")).toBeTruthy();
-    expect(router.find("/or/pong", "GET")).toBeTruthy();
+    expect(router.find("/or/ping", "GET")).toHaveProperty("path", "/or/ping|pong");
+    expect(router.find("/or/pong", "GET")).toHaveProperty("path", "/or/ping|pong");
     expect(router.find("/or/po", "GET")).toBeFalsy();
 
     expect(router.find("/or/pong/Hello world", "GET")).toHaveProperty("params", { param: "Hello world" });
@@ -89,9 +89,9 @@ test("alternation", () => {
 });
 
 test("splat", () => {
-    expect(router.find("/splat/1/2/test", "GET")).toBeTruthy();
+    expect(router.find("/splat/1/2/test", "GET")).toHaveProperty("path", "/splat/*/test");
     expect(router.find("/splat/1/2/3", "GET")).toBeFalsy();
-    expect(router.find("/splat1/1/2/3", "GET")).toBeTruthy();
+    expect(router.find("/splat1/1/2/3", "GET")).toHaveProperty("path", "/splat1/*");
     expect(router.find("/wildcardparam/1/2/hello", "GET")).toHaveProperty("params", { param: "hello" });
     // expect(router.find("/wildcardparam/1/2/hello/world", "GET")).toHaveProperty("params", { param: "hello", param2: "world" });
     expect(router.find("/wildcardparam2/1/2/hello/world", "GET")).toHaveProperty("params", { param: "hello", param2: "world" });

@@ -97,7 +97,6 @@ export default class Router {
             routeTree[method].push(route);
         } else {
             if (routeTree[method]) {
-                console.error("Found duplicate routes...", uri, method);
                 throw Error("Duplicate route");
             } else {
                 routeTree[method] = route;
