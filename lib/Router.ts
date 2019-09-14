@@ -196,7 +196,7 @@ export function segmentize_uri(uri: PathLike): string[] {
 /**
  * Maps the given array of keys to the array of values
  */
-function mapParams(keys: any[], values: any[]) {
+function mapParams(keys: (string|number)[], values: any[]) {
     return keys.reduce( (accumulator, name, index) => {
         accumulator[name] = values[index];
         return accumulator;
