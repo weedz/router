@@ -23,8 +23,8 @@ type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTI
 
 export default class Router {
     routes: RouteTree;
-    constructor(routes?: RouteTree) {
-        this.routes = routes || {};
+    constructor(routes: RouteTree = {}) {
+        this.routes = routes;
     }
 
     any_of(methods: HTTPMethod[], uri: PathLike, callback: Function, options?: any) {
@@ -136,7 +136,9 @@ export default class Router {
                     }
                     // We save all segments after a "splat" segment in the possibility there
                     // is one or more param segments matching our path further down the tree.
-                    splat_route.params.push(path);
+                    if (splat_route[":"]) {
+                        splat_route.params.push(path);
+                    }
                 }
             } else {
                 break;
