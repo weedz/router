@@ -15,8 +15,6 @@ type RouteTree = {
     "middleware"?: Route[];
 };
 
-type SplatRouteTree = RouteTree & { params?: string[]};
-
 type PathLike = string;
 
 type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH";
@@ -27,7 +25,7 @@ export default class Router {
         this.routes = routes;
     }
 
-    any_of(methods: HTTPMethod[], uri: PathLike, callback: Function, options?: any) {
+    anyOf(methods: HTTPMethod[], uri: PathLike, callback: Function, options?: any) {
         return methods.map(method => this.addRoute(method, uri, callback, options));
     }
 
@@ -70,6 +68,7 @@ export default class Router {
 
             let newRoute = routeTree[path];
             // setup alternating paths. (eg. "/test1|test2" matches the same route)
+            // The order in which we declare routes is important when using alternating paths, need to fix this. Maybe a deep merge?
             for (const orPath of path.split("|")) {
                 if (!routeTree[orPath]) {
                     if (!newRoute) {
@@ -107,42 +106,51 @@ export default class Router {
     }
 
     find(uri: PathLike, method: HTTPMethod) {
-        let routeTree: SplatRouteTree = this.routes;
+        let routeTree = this.routes;
 
-        const params = [];
+        const params = <string[]>[];
 
-        let splat_route: SplatRouteTree;
+        let splatRoute = false;
+        let splatParams = <string[]>[];
 
         for (let path of segmentize_uri(uri)) {
             // Handle exact path segment
-            if (routeTree.paths && routeTree.paths[path]) {
-                routeTree = routeTree.paths[path];
-            }
-            // Handle "param" segments
-            else if (routeTree[":"]) {
-                params.push(path);
-                routeTree = routeTree[":"];
-            }
-            //Handle "splat" segments
-            else if (routeTree["*"]) {
-                // Look for a specified path after "splat" segment
-                if (routeTree["*"].paths && routeTree["*"].paths[path]) {
-                    splat_route = undefined;
-                    routeTree = routeTree["*"].paths[path];
+            if (!splatRoute) {
+                if (routeTree.paths && routeTree.paths[path]) {
+                    routeTree = routeTree.paths[path];
+                }
+                // Handle "param" segments
+                else if (routeTree[":"]) {
+                    params.push(path);
+                    routeTree = routeTree[":"];
+                }
+                //Handle "splat" segments
+                else if (routeTree["*"]) {
+                    routeTree = routeTree["*"];
+                    splatRoute = true;
                 } else {
-                    if (!splat_route) {
-                        splat_route = routeTree["*"];
-                        splat_route.params = [];
-                    }
+                    break;
+                }
+            }
+
+            if (splatRoute) {
+                // Look for a specified path after "splat" segment
+                if (routeTree.paths && routeTree.paths[path]) {
+                    splatRoute = false;
+                    routeTree = routeTree.paths[path];
+                    splatParams = [];
+                } else if (routeTree[":"] && routeTree[":"].paths && routeTree[":"].paths[path]) {
+                    routeTree = routeTree[":"].paths[path];
+                    splatRoute = false;
+                } else {
                     // We save all segments after a "splat" segment in the possibility there
                     // is one or more param segments matching our path further down the tree.
-                    if (splat_route[":"]) {
-                        splat_route.params.push(path);
+                    if (routeTree[":"]) {
+                        splatParams.push(path);
                     }
                 }
-            } else {
-                break;
             }
+
             if (routeTree["middleware"]) {
                 let result = null;
                 for (const middleware of routeTree["middleware"]) {
@@ -155,25 +163,25 @@ export default class Router {
             }
         }
 
-        if (splat_route) {
-            routeTree = splat_route;
-        }
-        
+
         // This might handle splat segments followed by :param,
         // this is undefined and undocumented, might be dragons...
-        if (routeTree[":"] && routeTree.params) {
-            const paramLength = routeTree[":"][method].params.length;
+        if (splatParams.length) {
+            let route = routeTree[":"] || routeTree;
+
+            const paramLength = route[method].params.length - params.length;
 
             if (paramLength) {
-                params.push(...routeTree.params.slice(routeTree.params.length - paramLength));
-                routeTree = routeTree[":"];
+                params.push(...splatParams.slice(splatParams.length - paramLength));
             }
+            routeTree = route;
         }
 
         if (routeTree[method]) {
             return {
                 ...routeTree[method],
-                params: mapParams(routeTree[method].params, params)
+                params: mapParams(routeTree[method].params, params),
+                splat: splatParams,
             };
         }
 

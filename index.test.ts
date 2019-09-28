@@ -11,7 +11,7 @@ test("segmentize uri", () => {
 // router setup
 const router = new Router();
 
-router.any_of(["GET", "POST", "HEAD"], "/test", function() {
+router.anyOf(["GET", "POST", "HEAD"], "/test", function() {
     return true;
 });
 router.addRoute("GET", "/test/1/2/3", function() {
@@ -44,6 +44,11 @@ router.addRoute("GET", "/wildcardparam/*/test/:param", function(params) {
 });
 router.addRoute("GET", "/wildcardparam2/*/:param/:param2", function(params) {
     return params;
+});
+router.addRoute("GET", "/wildcardparam2/*/:param/:param2/end", function(params) {
+    return {
+        end: true
+    };
 });
 router.addRoute("GET", "/or/ping|pong", function() {
     return true;
@@ -93,10 +98,21 @@ test("splat", () => {
     expect(router.find("/splat/1/2/3", "GET")).toBeFalsy();
     expect(router.find("/splat1/1/2/3", "GET")).toHaveProperty("path", "/splat1/*");
     expect(router.find("/wildcardparam/1/2/hello", "GET")).toHaveProperty("params", { param: "hello" });
-    // expect(router.find("/wildcardparam/1/2/hello/world", "GET")).toHaveProperty("params", { param: "hello", param2: "world" });
+    expect((() => {
+        const route = router.find("/wildcardparam2/1/2/hello/world/end", "GET");
+        if (route) {
+            return {
+                params: route.params,
+                result: route.callback()
+            }
+        }
+    })()).toStrictEqual({
+        params: { param: "hello", param2: "world" },
+        result: { end: true }
+    });
     expect(router.find("/wildcardparam2/1/2/hello/world", "GET")).toHaveProperty("params", { param: "hello", param2: "world" });
     expect(router.find("/wildcardparam/1/2/test/hello", "GET")).toHaveProperty("params", { param: "hello" });
-})
+});
 
 test("methods", () => {
     expect(router.find("/test", "GET")).toBeTruthy();
@@ -120,5 +136,10 @@ test("duplicate route", () => {
     expect(() => {
         router.addRoute("GET", "/test/dup2/:param1", () => {});
         router.addRoute("GET", "/test/dup2/:param2", () => {});
+    }).toThrowError("Duplicate route");
+
+    expect(() => {
+        router.addRoute("GET", "/splat_dup/*/:param1", () => {});
+        router.addRoute("GET", "/splat_dup/*/:param1/:param2", () => {});
     }).toThrowError("Duplicate route");
 })
