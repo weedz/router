@@ -6,19 +6,19 @@
 Examples:
 
 ```javascript
-import Router from "./lib/Router";
+import Router, { RouteTree } from "router";
 const router = new Router();
 
-router.get("/test", ...); // 1
-router.get("/test/:msg", ...); // 2
-router.get("/test/:param1/:param2", ...); // 3
-router.get("/test/:param1/1/:param2", ...); // 4
-router.get("/splat/*/test", ...); // 5
-router.get("/splat1/*", ...); // 6
-router.get("/wildcardparam/*/:param", ...); // 7
-router.get("/wildcardparam/*/test/:param", ...); // 8
-router.get("/or/ping|pong", ...); // 9
-router.get("/or/ping|pong/:param", ...); // 10
+router.set("GET", "/test", ...); // 1
+router.set("GET", "/test/:msg", ...); // 2
+router.set("GET", "/test/:param1/:param2", ...); // 3
+router.set("GET", "/test/:param1/1/:param2", ...); // 4
+router.set("GET", "/splat/*/test", ...); // 5
+router.set("GET", "/splat1/*", ...); // 6
+router.set("GET", "/wildcardparam/*/:param", ...); // 7
+router.set("GET", "/wildcardparam/*/test/:param", ...); // 8
+router.anyOf(["GET", "POST"], "/or/ping|pong", ...); // 9
+router.set("GET", "/or/ping|pong/:param", ...); // 10
 
 router.find("/test", "GET");    // matches 1
 router.find("/test/Hello world", "GET");    // 2, params.msg = "Hello world"
@@ -31,5 +31,19 @@ router.find("/wildcardparam/1/2/YO!", "GET");    // matches 7, params.param = "Y
 router.find("/wildcardparam/1/2/test/YO!", "GET");    // matches 8, params.param = "Yo"
 router.find("/or/pong", "GET");    // matches 9
 router.find("/or/ping", "GET");    // matches 9
+router.find("/or/ping", "POST");    // matches 9
 router.find("/or/pong/Hello", "GET");    // matches 10, params.param = "Hello"
+
+// "use"
+function api(router: Router, base: RouteTree) {
+    router.setAt(base, "GET", "/test", function() {
+        return true;
+    });
+    router.setAt(base, "GET", "/msg/:msg", function(param) {
+        return param.msg;
+    });
+}
+router.use("/api", api);
+router.find("/api/test", "GET");
+router.find("/api/msg/hello", "GET");
 ```

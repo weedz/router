@@ -1,4 +1,5 @@
-import Router, { segmentize_uri } from "./lib/Router";
+import Router, { segmentize_uri } from "..";
+import { api } from "./api";
 
 test("segmentize uri", () => {
     expect(segmentize_uri("1/2/3")).toStrictEqual(["1", "2", "3"]);
@@ -14,63 +15,51 @@ const router = new Router();
 router.anyOf(["GET", "POST", "HEAD"], "/test", function() {
     return true;
 });
-router.addRoute("GET", "/test/1/2/3", function() {
+router.set("GET", "/test/1/2/3", function() {
     return true;
 });
-router.addRoute("GET", "/test/:msg", function(params) {
+router.set("GET", "/test/:msg", function(params) {
     return params;
 });
-router.addRoute("GET", "/test/:param1/:param2", function(params) {
+router.set("GET", "/test/:param1/:param2", function(params) {
     return params;
 });
-router.addRoute("GET", "/test/:param1/1/:param2", function(params) {
+router.set("GET", "/test/:param1/1/:param2", function(params) {
     return params;
 });
-router.addRoute("GET", "/splat/*/test", function() {
+router.set("GET", "/splat/*/test", function() {
     return true;
 });
-router.addRoute("GET", "/splat1/*", function() {
+router.set("GET", "/splat1/*", function() {
     return true;
 });
-router.addRoute("GET", "/wildcardparam/*/:param", function(params) {
+router.set("GET", "/wildcardparam/*/:param", function(params) {
     return params;
 });
 // This is invalid because of "/wildcardparam/*/:param", might need to look in to this..
-// router.addRoute("GET", "/wildcardparam/*/:param/:param2", function(params) {
+// router.set("GET", "/wildcardparam/*/:param/:param2", function(params) {
 //     return params;
 // });
-router.addRoute("GET", "/wildcardparam/*/test/:param", function(params) {
+router.set("GET", "/wildcardparam/*/test/:param", function(params) {
     return params;
 });
-router.addRoute("GET", "/wildcardparam2/*/:param/:param2", function(params) {
+router.set("GET", "/wildcardparam2/*/:param/:param2", function(params) {
     return params;
 });
-router.addRoute("GET", "/wildcardparam2/*/:param/:param2/end", function(params) {
+router.set("GET", "/wildcardparam2/*/:param/:param2/end", function(params) {
     return {
         end: true
     };
 });
-router.addRoute("GET", "/or/ping|pong", function() {
+router.set("GET", "/or/ping|pong", function() {
     return true;
 });
-router.addRoute("GET", "/or/ping|pong/:param", function(params) {
+router.set("GET", "/or/ping|pong/:param", function(params) {
     return params;
 });
 
 // Middleware
-router.use("/middleware", function() {
-    return true;
-});
-router.use("/middleware/false", function() {
-    return false;
-});
-router.addRoute("GET", "/middleware/test", function() {
-    return true;
-});
-router.addRoute("GET", "/middleware/false/test", function() {
-    return true;
-});
-
+router.use("/api", api);
 
 test("exact route", () => {
     expect(router.find("/test", "GET")).toHaveProperty("path", "/test");
@@ -123,23 +112,24 @@ test("methods", () => {
 
 // middleware is WIP...
 test("middleware", () => {
-    expect(router.find("/middleware/test", "GET")).toBeTruthy();
-    expect(router.find("/middleware/false/1", "GET")).toBeFalsy();
+    expect(router.find("/api/test", "GET")).toBeTruthy();
+    expect(router.find("/api/false", "GET")).toBeFalsy();
+    expect(router.find("/api/msg/Hello World", "GET")).toHaveProperty("params", { msg: "Hello World" });
 });
 
 test("duplicate route", () => {
     expect(() => {
-        router.addRoute("GET", "/test/duplicate", () => {});
-        router.addRoute("GET", "/test/duplicate", () => {});
+        router.set("GET", "/test/duplicate", () => {});
+        router.set("GET", "/test/duplicate", () => {});
     }).toThrowError("Duplicate route");
 
     expect(() => {
-        router.addRoute("GET", "/test/dup2/:param1", () => {});
-        router.addRoute("GET", "/test/dup2/:param2", () => {});
+        router.set("GET", "/test/dup2/:param1", () => {});
+        router.set("GET", "/test/dup2/:param2", () => {});
     }).toThrowError("Duplicate route");
 
     expect(() => {
-        router.addRoute("GET", "/splat_dup/*/:param1", () => {});
-        router.addRoute("GET", "/splat_dup/*/:param1/:param2", () => {});
+        router.set("GET", "/splat_dup/*/:param1", () => {});
+        router.set("GET", "/splat_dup/*/:param1/:param2", () => {});
     }).toThrowError("Duplicate route");
 })

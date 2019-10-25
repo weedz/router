@@ -2,19 +2,22 @@
   "name": "router",
   "version": "1.0.0",
   "description": "",
-  "main": "lib/Router.ts",
-  "directories": {
-    "lib": "lib"
-  },
+  "main": "index.js",
   "scripts": {
     "test": "jest index.test.ts",
-    "travis:cover": "jest --coverage --coverageReporters=text-lcov | coveralls"
+    "travis:cover": "jest --coverage --coverageReporters=text-lcov | coveralls",
+    "build": "tsc",
+    "prepare": "npm run build"
   },
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^24.0.18",
-    "coveralls": "^3.0.6",
+    "@types/jest": "^24.0.19",
+    "coveralls": "^3.0.7",
     "jest": "^24.9.0",
     "ts-jest": "^24.1.0",
     "typescript": "^3.6.3"
