@@ -70,8 +70,8 @@ export default class Router {
             }
 
             let newRoute = routeTree[path];
-            // setup alternating paths. (eg. "/test1|test2" matches the same route)
-            // The order in which we declare routes is important when using alternating paths, need to fix this. Maybe a deep merge?
+            // Handle alternating paths. (eg. "/test1|test2" matches the same route)
+            // TODO: The order in which we declare routes is important when using alternating paths, need to fix this. Maybe a deep merge?
             for (const orPath of path.split("|")) {
                 if (!routeTree[orPath]) {
                     if (!newRoute) {
@@ -102,9 +102,10 @@ export default class Router {
                 if (typeof result === "function") {
                     routeTree[method].push(route);
                 }
-            } else {
-                // routeTree[method].push(route);
             }
+            // else {
+            //     routeTree[method].push(route);
+            // }
         } else {
             if (routeTree[method]) {
                 throw Error("Duplicate route");
@@ -192,7 +193,8 @@ export default class Router {
 
         if (routeTree[method]) {
             return {
-                ...routeTree[method],
+                callback: routeTree[method].callback,
+                path: routeTree[method].path,
                 params: mapParams(routeTree[method].params, params),
                 splat: splatParams,
                 match
