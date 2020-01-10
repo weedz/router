@@ -121,6 +121,7 @@ export default class Router {
 
         const params = <string[]>[];
 
+        let match = true;
         let splatRoute = false;
         let splatParams = <string[]>[];
 
@@ -140,6 +141,7 @@ export default class Router {
                     routeTree = routeTree["*"];
                     splatRoute = true;
                 } else {
+                    match = false;
                     break;
                 }
             }
@@ -193,6 +195,7 @@ export default class Router {
                 ...routeTree[method],
                 params: mapParams(routeTree[method].params, params),
                 splat: splatParams,
+                match
             };
         }
 
