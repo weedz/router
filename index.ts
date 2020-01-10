@@ -61,13 +61,12 @@ export default class Router {
                 path = ":";
             } else if (path === "*") {
                 is_splat = 1;
-                path = "*";
             } else {
                 is_splat = 0;
                 if (!routeTree.paths) {
                     routeTree.paths = {};
                 }
-                routeTree = routeTree.paths
+                routeTree = routeTree.paths;
             }
 
             let newRoute = routeTree[path];
