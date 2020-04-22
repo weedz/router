@@ -6,7 +6,7 @@
 Examples:
 
 ```javascript
-import Router, { RouteTree } from "router";
+import { Router, RouteTree } from "router";
 const router = new Router();
 
 router.set("GET", "/test", ...); // 1

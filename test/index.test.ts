@@ -1,4 +1,4 @@
-import Router, { segmentize_uri } from "..";
+import { Router, segmentize_uri } from "../src";
 import { api } from "./api";
 
 test("segmentize uri", () => {

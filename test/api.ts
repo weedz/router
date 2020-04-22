@@ -1,4 +1,4 @@
-import Router, { RouteTree } from "..";
+import { Router, RouteTree } from "../src";
 
 export function api(router: Router, base: RouteTree) {
     router.setAt(base, "GET", "/test", function() {

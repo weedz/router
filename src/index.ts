@@ -21,7 +21,7 @@ type PathLike = string;
 
 type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH";
 
-export default class Router {
+export class Router {
     routes: RouteTree;
     constructor(routes: RouteTree = {}) {
         this.routes = routes;

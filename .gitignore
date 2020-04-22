@@ -1,5 +1,4 @@
 node_modules
 coverage/
+dist/
 package-lock.json
-index.d.ts
-index.js
