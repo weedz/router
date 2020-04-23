@@ -1,5 +1,6 @@
-import { Router, segmentize_uri } from "../src";
+import { Router, segmentize_uri, mapParams } from "../src";
 import { api } from "./api";
+import { api_v2 } from "./api_v2";
 
 test("segmentize uri", () => {
     expect(segmentize_uri("1/2/3")).toStrictEqual(["1", "2", "3"]);
@@ -7,6 +8,10 @@ test("segmentize uri", () => {
     expect(segmentize_uri("//1/2/3//")).toStrictEqual(["1", "2", "3"]);
     expect(segmentize_uri("//test/1/2/3//")).toStrictEqual(["test", "1", "2", "3"]);
     expect(segmentize_uri("/1/2?ping=pong")).toStrictEqual(["1", "2"]);
+});
+
+test("map params", () => {
+    expect(mapParams(["a","b","c"], [2,4,6])).toStrictEqual({a: 2, b: 4, c: 6});
 });
 
 // router setup
@@ -18,13 +23,13 @@ router.anyOf(["GET", "POST", "HEAD"], "/test", function() {
 router.set("GET", "/test/1/2/3", function() {
     return true;
 });
-router.set("GET", "/test/:msg", function(params) {
+router.set("GET", "/test/:msg", function(params: any) {
     return params;
 });
-router.set("GET", "/test/:param1/:param2", function(params) {
+router.set("GET", "/test/:param1/:param2", function(params: any) {
     return params;
 });
-router.set("GET", "/test/:param1/1/:param2", function(params) {
+router.set("GET", "/test/:param1/1/:param2", function(params: any) {
     return params;
 });
 router.set("GET", "/splat/*/test", function() {
@@ -33,20 +38,20 @@ router.set("GET", "/splat/*/test", function() {
 router.set("GET", "/splat1/*", function() {
     return true;
 });
-router.set("GET", "/wildcardparam/*/:param", function(params) {
+router.set("GET", "/wildcardparam/*/:param", function(params: any) {
     return params;
 });
 // This is invalid because of "/wildcardparam/*/:param", might need to look in to this..
 // router.set("GET", "/wildcardparam/*/:param/:param2", function(params) {
 //     return params;
 // });
-router.set("GET", "/wildcardparam/*/test/:param", function(params) {
+router.set("GET", "/wildcardparam/*/test/:param", function(params: any) {
     return params;
 });
-router.set("GET", "/wildcardparam2/*/:param/:param2", function(params) {
+router.set("GET", "/wildcardparam2/*/:param/:param2", function(params: any) {
     return params;
 });
-router.set("GET", "/wildcardparam2/*/:param/:param2/end", function(params) {
+router.set("GET", "/wildcardparam2/*/:param/:param2/end", function() {
     return {
         end: true
     };
@@ -54,12 +59,13 @@ router.set("GET", "/wildcardparam2/*/:param/:param2/end", function(params) {
 router.set("GET", "/or/ping|pong", function() {
     return true;
 });
-router.set("GET", "/or/ping|pong/:param", function(params) {
+router.set("GET", "/or/ping|pong/:param", function(params: any) {
     return params;
 });
 
 // Middleware
 router.use("/api", api);
+router.use("/api/v2", api_v2);
 
 test("exact route", () => {
     expect(router.find("/test", "GET")).toHaveProperty("path", "/test");
@@ -115,6 +121,10 @@ test("middleware", () => {
     expect(router.find("/api/test", "GET")).toBeTruthy();
     expect(router.find("/api/false", "GET")).toBeFalsy();
     expect(router.find("/api/msg/Hello World", "GET")).toHaveProperty("params", { msg: "Hello World" });
+
+    // Needs better tests..
+    expect(router.find("/api/v2/msg/Hello World", "GET")).toHaveProperty("params", { msg: "Hello World" });
+    expect(router.find("/api/v2/msg/Goodbye World", "GET")).toBeFalsy();
 });
 
 test("duplicate route", () => {

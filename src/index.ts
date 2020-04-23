@@ -9,21 +9,29 @@ type Route = {
 export type RouteTree = {
     [key in HTTPMethod]?: Route;
 } & {
-    paths?: {
+    paths: {
         [key: string]: RouteTree;
     };
     ":"?: RouteTree;
     "*"?: RouteTree;
-    "middleware"?: Route[];
+    "middleware"?: Function[];
 };
 
 type PathLike = string;
 
 type HTTPMethod = "HEAD" | "GET" | "POST" | "PUT" | "DELETE" | "CONNECT" | "OPTIONS" | "TRACE" | "PATCH";
 
+enum RouteType {
+    STATIC,
+    DYNAMIC,
+    SPLAT
+};
+
 export class Router {
     routes: RouteTree;
-    constructor(routes: RouteTree = {}) {
+    constructor(routes: RouteTree = {
+        paths: {}
+    }) {
         this.routes = routes;
     }
 
@@ -48,6 +56,7 @@ export class Router {
         let is_splat = 0;
 
         for (let path of segmentize_uri(uri)) {
+            let type = RouteType.STATIC;
             if (path[0] === ":") {
                 params.push(path.substring(1));
                 if (is_splat) {
@@ -59,27 +68,44 @@ export class Router {
                     is_splat++;
                 }
                 path = ":";
-            } else if (path === "*") {
+                type = RouteType.DYNAMIC;
+            } else if (path[0] === "*") {
                 is_splat = 1;
+                type = RouteType.SPLAT;
             } else {
                 is_splat = 0;
-                if (!routeTree.paths) {
-                    routeTree.paths = {};
-                }
-                routeTree = routeTree.paths;
             }
 
-            let newRoute = routeTree[path];
+            let newRoute: RouteTree;
+            switch(type) {
+                case RouteType.STATIC:
+                    newRoute = routeTree.paths[path];
+                    break;
+                case RouteType.DYNAMIC:
+                    if (!routeTree[":"]) {
+                        routeTree[":"] = {paths: {}};
+                    }
+                    newRoute = routeTree[":"];
+                    break;
+                case RouteType.SPLAT:
+                    if (!routeTree["*"]) {
+                        routeTree["*"] = {paths: {}};
+                    }
+                    newRoute = routeTree["*"];
+                    break;
+            }
             // Handle alternating paths. (eg. "/test1|test2" matches the same route)
             // TODO: The order in which we declare routes is important when using alternating paths, need to fix this. Maybe a deep merge?
-            for (const orPath of path.split("|")) {
-                if (!routeTree[orPath]) {
-                    if (!newRoute) {
-                        newRoute = {};
+            if (type === RouteType.STATIC) {
+                for (const orPath of path.split("|")) {
+                    if (!routeTree.paths[orPath]) {
+                        if (!newRoute) {
+                            newRoute = {paths: {}};
+                        }
+                        routeTree.paths[orPath] = newRoute;
+                    } else {
+                        newRoute = routeTree.paths[orPath];
                     }
-                    routeTree[orPath] = newRoute;
-                } else {
-                    newRoute = routeTree[orPath];
                 }
             }
             routeTree = newRoute;
@@ -93,19 +119,17 @@ export class Router {
         };
 
         if (method === "middleware") {
-            // We can have multiple middewares for the same route
-            if (!routeTree[method]) {
-                routeTree[method] = [];
-            }
             if (typeof callback === "function") {
                 const result = callback(this, routeTree, route);
                 if (typeof result === "function") {
-                    routeTree[method].push(route);
+                    if (routeTree[method] === undefined) {
+                        // We can have multiple middewares for the same route
+                        routeTree[method] = [];
+                    }
+                    // TODO: TypeScript can't infer that routeTree[method] is not undefined here so we are forcing this to work...
+                    routeTree[method]!.push(result);
                 }
             }
-            // else {
-            //     routeTree[method].push(route);
-            // }
         } else {
             if (routeTree[method]) {
                 throw Error("Duplicate route");
@@ -129,7 +153,7 @@ export class Router {
         for (let path of segmentize_uri(uri)) {
             // Handle exact path segment
             if (!splatRoute) {
-                if (routeTree.paths && routeTree.paths[path]) {
+                if (routeTree.paths[path]) {
                     routeTree = routeTree.paths[path];
                 }
                 // Handle "param" segments
@@ -149,11 +173,11 @@ export class Router {
 
             if (splatRoute) {
                 // Look for a specified path after "splat" segment
-                if (routeTree.paths && routeTree.paths[path]) {
+                if (routeTree.paths[path]) {
                     splatRoute = false;
                     routeTree = routeTree.paths[path];
                     splatParams = [];
-                } else if (routeTree[":"] && routeTree[":"].paths && routeTree[":"].paths[path]) {
+                } else if (routeTree[":"] && routeTree[":"].paths[path]) {
                     routeTree = routeTree[":"].paths[path];
                     splatRoute = false;
                 } else {
@@ -165,11 +189,13 @@ export class Router {
                 }
             }
 
+            // TODO: FIX THIS
             if (routeTree["middleware"]) {
                 let result = null;
                 for (const middleware of routeTree["middleware"]) {
                     // TODO: improve middleware support and handling...
-                    result = middleware.callback(mapParams(middleware.params, params), result);
+                    result = middleware(uri, result);
+                    // result = middleware.callback(mapParams(middleware.params, params), result);
                     if (!result) {
                         return false;
                     }
@@ -183,7 +209,7 @@ export class Router {
         if (splatParams.length) {
             let route = routeTree[":"] || routeTree;
 
-            const paramLength = route[method].params.length - params.length;
+            const paramLength = route[method]!.params.length - params.length;
 
             if (paramLength) {
                 params.push(...splatParams.slice(splatParams.length - paramLength));
@@ -191,11 +217,11 @@ export class Router {
             routeTree = route;
         }
 
-        if (routeTree[method]) {
+        if (routeTree[method] !== undefined) {
             return {
-                callback: routeTree[method].callback,
-                path: routeTree[method].path,
-                params: mapParams(routeTree[method].params, params),
+                callback: routeTree[method]?.callback,
+                path: routeTree[method]?.path,
+                params: routeTree[method] && mapParams(routeTree[method]!.params, params) || {},
                 splat: splatParams,
                 match
             };
@@ -223,9 +249,10 @@ export function segmentize_uri(uri: PathLike): string[] {
 /**
  * Maps the given array of keys to the array of values
  */
-function mapParams(keys: (string|number)[], values: any[]) {
-    return keys.reduce( (accumulator, name, index) => {
-        accumulator[name] = values[index];
-        return accumulator;
-    }, {});
+export function mapParams(keys: (string|number)[], values: any[]) {
+    const params: any = {};
+    for (let i = 0; i < keys.length; i++) {
+        params[keys[i]] = values[i];
+    }
+    return params;
 }
