@@ -1,5 +1,5 @@
 {
-  "name": "router",
+  "name": "@weedz/router",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -18,6 +18,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/weedz/router.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "bugs": {
     "url": "https://github.com/weedz/router/issues"
