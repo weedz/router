@@ -1,7 +1,7 @@
 {
-  "name": "@weedz/router",
+  "name": "@weedzcokie/router",
   "version": "1.0.0",
-  "description": "",
+  "description": "[![Build Status](https://travis-ci.org/weedz/router.svg?branch=master)](https://travis-ci.org/weedz/router) [![Coverage Status](https://coveralls.io/repos/github/weedz/router/badge.svg?branch=master)](https://coveralls.io/github/weedz/router?branch=master)",
   "main": "dist/index.js",
   "source": "src/index.ts",
   "module": "dist/index.es.js",
@@ -19,9 +19,6 @@
     "type": "git",
     "url": "git+https://github.com/weedz/router.git"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "bugs": {
     "url": "https://github.com/weedz/router/issues"
   },
@@ -34,5 +31,6 @@
     "microbundle": "^0.12.0-next.8",
     "ts-jest": "^25.4.0",
     "typescript": "^3.8.3"
-  }
+  },
+  "dependencies": {}
 }
