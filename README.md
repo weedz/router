@@ -1,5 +1,6 @@
 # Router
 
+![npm](https://img.shields.io/npm/v/@weedzcokie/router?style=flat-square)
 [![Build Status](https://travis-ci.org/weedz/router.svg?branch=master)](https://travis-ci.org/weedz/router)
 [![Coverage Status](https://coveralls.io/repos/github/weedz/router/badge.svg?branch=master)](https://coveralls.io/github/weedz/router?branch=master)
 
