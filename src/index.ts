@@ -217,11 +217,13 @@ export class Router {
             routeTree = route;
         }
 
-        if (routeTree[method] !== undefined) {
+        const route = routeTree[method]
+
+        if (route) {
             return {
-                callback: routeTree[method]?.callback,
-                path: routeTree[method]?.path,
-                params: routeTree[method] && mapParams(routeTree[method]!.params, params) || {},
+                callback: route.callback,
+                path: route.path,
+                params: mapParams(route.params, params) || {},
                 splat: splatParams,
                 match
             };
