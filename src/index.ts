@@ -1,19 +1,17 @@
-type RouteCallback = Function | any;
-
-type Route = {
+type Route<T = Function> = {
     params: string[];
-    callback: RouteCallback
+    callback: T
     path: PathLike;
 };
 
-export type RouteTree = {
-    [key in HTTPMethod]?: Route;
+export type RouteTree<T = Function> = {
+    [key in HTTPMethod]?: Route<T>;
 } & {
     paths: {
-        [key: string]: RouteTree;
+        [key: string]: RouteTree<T>;
     };
-    ":"?: RouteTree;
-    "*"?: RouteTree;
+    ":"?: RouteTree<T>;
+    "*"?: RouteTree<T>;
     "middleware"?: Function[];
 };
 
@@ -27,31 +25,31 @@ enum RouteType {
     SPLAT
 };
 
-export class Router {
-    routes: RouteTree;
-    constructor(routes: RouteTree = {
+export class Router<CallbackType = Function> {
+    routes: RouteTree<CallbackType>;
+    constructor(routes: RouteTree<CallbackType> = {
         paths: {}
     }) {
         this.routes = routes;
     }
 
-    anyOf(methods: HTTPMethod[], uri: PathLike, callback: RouteCallback, options?: any) {
+    anyOf(methods: HTTPMethod[], uri: PathLike, callback: CallbackType, options?: any) {
         return methods.map(method => this.set(method, uri, callback, options));
     }
 
-    use(uri: PathLike, callback: RouteCallback, options?: any) {
+    use(uri: PathLike, callback: CallbackType, options?: any) {
         return this.createRoute(this.routes, uri, "middleware", callback, options);
     }
 
-    set(method: HTTPMethod, uri: PathLike, callback: RouteCallback, options?: any) {
+    set(method: HTTPMethod, uri: PathLike, callback: CallbackType, options?: any) {
         return this.createRoute(this.routes, uri, method, callback, options);
     }
 
-    setAt(base: RouteTree, method: HTTPMethod, uri: PathLike, callback: RouteCallback, options?: any) {
+    setAt(base: RouteTree<CallbackType>, method: HTTPMethod, uri: PathLike, callback: CallbackType, options?: any) {
         return this.createRoute(base, uri, method, callback, options);
     }
 
-    private createRoute(routeTree: RouteTree, uri: PathLike, method: HTTPMethod | "middleware", callback: RouteCallback, options?: any): Route {
+    private createRoute(routeTree: RouteTree<CallbackType>, uri: PathLike, method: HTTPMethod | "middleware", callback: CallbackType, options?: any): Route<CallbackType> {
         const params = [];
         let is_splat = 0;
 
@@ -76,7 +74,7 @@ export class Router {
                 is_splat = 0;
             }
 
-            let newRoute: RouteTree;
+            let newRoute: RouteTree<CallbackType>;
             switch(type) {
                 case RouteType.STATIC:
                     newRoute = routeTree.paths[path];
